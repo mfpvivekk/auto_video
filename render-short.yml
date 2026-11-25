@@ -1,0 +1,62 @@
+name: Render Hindi Short
+
+on:
+  workflow_dispatch:
+    inputs:
+      row_num:
+        description: 'Google Sheet row number'
+        required: true
+        type: string
+      title:
+        description: 'Video title'
+        required: true
+        type: string
+      search_query:
+        description: 'English stock video search query'
+        required: false
+        default: 'technology abstract'
+        type: string
+      wav_file_id:
+        description: 'Google Drive File ID of the Hindi .wav voiceover'
+        required: true
+        type: string
+      srt_file_id:
+        description: 'Google Drive File ID of the Hindi .srt captions'
+        required: true
+        type: string
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install ffmpeg and Hindi Noto fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-noto-core fonts-noto-extra
+
+      - name: Install Python dependencies
+        run: |
+          pip install --no-cache-dir requests google-api-python-client google-auth
+
+      - name: Render Short and upload to Google Drive
+        env:
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          DRIVE_FOLDER_ID: '1XE3TETFPvfassBYfZMbhA_oQVV_3nkx7'
+          SPREADSHEET_ID: '1KfwjH6UmDQ3JT9r4VpcW_pNNlqJ9KlnFdZ2Ad5cPB50'
+          ROW_NUM: ${{ inputs.row_num }}
+          VIDEO_TITLE: ${{ inputs.title }}
+          SEARCH_QUERY: ${{ inputs.search_query }}
+          WAV_FILE_ID: ${{ inputs.wav_file_id }}
+          SRT_FILE_ID: ${{ inputs.srt_file_id }}
+        run: python render_short.py
